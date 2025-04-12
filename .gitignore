@@ -1,0 +1,7 @@
+.DS_Store
+*.log
+/tmp
+/vendor/
+graph.json
+minikube-darwin-arm64
+kubernetes-scraper 
