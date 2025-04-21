@@ -134,7 +134,12 @@ func listAllResources(ctx context.Context, client *k8sclient.K8sClient, g *graph
 		podName := podObj["metadata"].(map[string]interface{})["name"].(string)
 		podNamespace := podObj["metadata"].(map[string]interface{})["namespace"].(string)
 		nodeName := podObj["spec"].(map[string]interface{})["nodeName"].(string)
-		ownerRefs := podObj["metadata"].(map[string]interface{})["ownerReferences"].([]interface{})
+
+		// Get ownerReferences with nil check
+		ownerRefs := []interface{}{}
+		if ownerRefsInterface, ok := podObj["metadata"].(map[string]interface{})["ownerReferences"]; ok && ownerRefsInterface != nil {
+			ownerRefs = ownerRefsInterface.([]interface{})
+		}
 
 		// Pod -> Node relationship
 		if nodeName != "" {
@@ -184,14 +189,24 @@ func listAllResources(ctx context.Context, client *k8sclient.K8sClient, g *graph
 		serviceObj := service.(map[string]interface{})
 		serviceName := serviceObj["metadata"].(map[string]interface{})["name"].(string)
 		serviceNamespace := serviceObj["metadata"].(map[string]interface{})["namespace"].(string)
-		selector := serviceObj["spec"].(map[string]interface{})["selector"].(map[string]interface{})
+
+		// Get service selector with nil check
+		selector := make(map[string]interface{})
+		if selectorInterface, ok := serviceObj["spec"].(map[string]interface{})["selector"]; ok && selectorInterface != nil {
+			selector = selectorInterface.(map[string]interface{})
+		}
 
 		// Service -> Pod relationships based on selector
 		for _, pod := range pods {
 			podObj := pod.(map[string]interface{})
 			podName := podObj["metadata"].(map[string]interface{})["name"].(string)
 			podNamespace := podObj["metadata"].(map[string]interface{})["namespace"].(string)
-			podLabels := podObj["metadata"].(map[string]interface{})["labels"].(map[string]interface{})
+
+			// Get pod labels with nil check
+			podLabels := make(map[string]interface{})
+			if labelsInterface, ok := podObj["metadata"].(map[string]interface{})["labels"]; ok && labelsInterface != nil {
+				podLabels = labelsInterface.(map[string]interface{})
+			}
 
 			// Check if pod labels match service selector
 			matches := true
@@ -286,7 +301,12 @@ func watchResource(ctx context.Context, watchFunc func(context.Context) (watch.I
 
 				metadata := unstructuredObj["metadata"].(map[string]interface{})
 				name := metadata["name"].(string)
-				namespace := metadata["namespace"].(string)
+
+				// Get namespace with nil check
+				namespace := ""
+				if namespaceInterface, ok := metadata["namespace"]; ok && namespaceInterface != nil {
+					namespace = namespaceInterface.(string)
+				}
 
 				switch event.Type {
 				case watch.Added:
@@ -387,7 +407,12 @@ func updateRelationships(g *graph.Graph, obj map[string]interface{}, resourceTyp
 			for _, pod := range podCache {
 				podName := pod["metadata"].(map[string]interface{})["name"].(string)
 				podNamespace := pod["metadata"].(map[string]interface{})["namespace"].(string)
-				podLabels := pod["metadata"].(map[string]interface{})["labels"].(map[string]interface{})
+
+				// Get pod labels with nil check
+				podLabels := make(map[string]interface{})
+				if labelsInterface, ok := pod["metadata"].(map[string]interface{})["labels"]; ok && labelsInterface != nil {
+					podLabels = labelsInterface.(map[string]interface{})
+				}
 
 				// Check if pod labels match service selector
 				matches := true

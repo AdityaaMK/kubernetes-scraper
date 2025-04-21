@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -48,6 +49,11 @@ func NewK8sClient() (*K8sClient, error) {
 	}, nil
 }
 
+// Convert a runtime.Object to a map[string]interface{}
+func ConvertToMap(obj interface{}) (map[string]interface{}, error) {
+	return runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+}
+
 // ListPods lists all pods in all namespaces
 func (c *K8sClient) ListPods(ctx context.Context) ([]interface{}, error) {
 	pods, err := c.clientset.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
@@ -55,10 +61,14 @@ func (c *K8sClient) ListPods(ctx context.Context) ([]interface{}, error) {
 		return nil, err
 	}
 
-	// Convert to []interface{}
+	// Convert to []interface{} with maps
 	result := make([]interface{}, len(pods.Items))
 	for i, pod := range pods.Items {
-		result[i] = pod
+		podMap, err := ConvertToMap(&pod)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = podMap
 	}
 	return result, nil
 }
@@ -72,7 +82,11 @@ func (c *K8sClient) ListReplicaSets(ctx context.Context) ([]interface{}, error) 
 
 	result := make([]interface{}, len(replicasets.Items))
 	for i, rs := range replicasets.Items {
-		result[i] = rs
+		rsMap, err := ConvertToMap(&rs)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = rsMap
 	}
 	return result, nil
 }
@@ -86,7 +100,11 @@ func (c *K8sClient) ListDeployments(ctx context.Context) ([]interface{}, error) 
 
 	result := make([]interface{}, len(deployments.Items))
 	for i, deployment := range deployments.Items {
-		result[i] = deployment
+		deploymentMap, err := ConvertToMap(&deployment)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = deploymentMap
 	}
 	return result, nil
 }
@@ -100,7 +118,11 @@ func (c *K8sClient) ListNodes(ctx context.Context) ([]interface{}, error) {
 
 	result := make([]interface{}, len(nodes.Items))
 	for i, node := range nodes.Items {
-		result[i] = node
+		nodeMap, err := ConvertToMap(&node)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = nodeMap
 	}
 	return result, nil
 }
@@ -114,7 +136,11 @@ func (c *K8sClient) ListServices(ctx context.Context) ([]interface{}, error) {
 
 	result := make([]interface{}, len(services.Items))
 	for i, service := range services.Items {
-		result[i] = service
+		serviceMap, err := ConvertToMap(&service)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = serviceMap
 	}
 	return result, nil
 }
@@ -128,7 +154,11 @@ func (c *K8sClient) ListConfigMaps(ctx context.Context) ([]interface{}, error) {
 
 	result := make([]interface{}, len(configmaps.Items))
 	for i, configmap := range configmaps.Items {
-		result[i] = configmap
+		configmapMap, err := ConvertToMap(&configmap)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = configmapMap
 	}
 	return result, nil
 }
